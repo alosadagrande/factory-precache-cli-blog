@@ -1,3 +1,4 @@
+Alberto Losada Grande
 # Boosting Red Hat GitOps ZTP at the network edge using factory-precaching-cli tool
 ## Summary
 The factory-precaching-cli tool is a containerized Go binary that is publicly available in the Telco RAN tools container image. In this blog, we want to show how the factory-precaching-cli tool can drastically reduce the OpenShift installation time when using the Red Hat GitOps Zero Touch Provisioning (ZTP) workflow. This statement becomes very significant when dealing with low bandwidth networks either when connecting to a public or disconnected registry.
