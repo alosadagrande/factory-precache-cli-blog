@@ -1,7 +1,7 @@
 Alberto Losada Grande
 # Boosting Red Hat GitOps ZTP at the network edge using the factory-precaching-cli tool
 ## Summary
-The factory-precaching-cli tool is a containerized Go binary that is publicly available in the Telco RAN tools container image. In this blog, we want to show how the factory-precaching-cli tool can drastically reduce the OpenShift installation time when using the Red Hat GitOps Zero Touch Provisioning (ZTP) workflow. This statement becomes very significant when dealing with low bandwidth networks either when connecting to a public or disconnected registry.
+The [factory-precaching-cli tool](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html) is a containerized Go binary that is publicly available in the Telco RAN tools container image. In this blog, we want to show how the factory-precaching-cli tool can drastically reduce the OpenShift installation time when using the Red Hat GitOps Zero Touch Provisioning (ZTP) workflow. This statement becomes very significant when dealing with low bandwidth networks either when connecting to a public or disconnected registry.
 
 ⚠️ The factory-precaching-cli tool is a Technology Preview feature only.
 
@@ -296,4 +296,4 @@ Finally, the cluster is installed. From the multicloud console running on the hu
 
 # Conclusion
 
-The factory-precaching-cli tool is a promising tool that must be taken into account when dealing with slow networks when provisioning your SNO clusters. It also can come in handy when your corporate registry or even your network may be a bottleneck when you are about to install a high number of SNO clusters at the same time.
+The factory-precaching-cli tool is a promising tool that must be taken into account when dealing with slow networks when provisioning your SNO clusters. It also can come in handy when your corporate registry or even your network may be a bottleneck when you are about to install a high number of SNO clusters at the same time. More information can be found in the [official docs](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html) and the [telco-ran-tools GitHub repository](https://github.com/openshift-kni/telco-ran-tools/tree/main).
