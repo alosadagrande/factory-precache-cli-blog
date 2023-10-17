@@ -176,8 +176,8 @@ Then, we add the download parameter and the OCP release version we want to preca
 ```sh
 [root@snonode ~]$ podman run -v /mnt:/mnt -v /root/.docker:/root/.docker -v /etc/pki:/etc/pki \
 --privileged --rm quay.io/openshift-kni/telco-ran-tools:latest -- factory-precaching-cli \
-download -r 4.13.11 --acm-version 2.8.1 --mce-version 2.3.1 -f /mnt  --img quay.io/alosadag/troubleshoot \
---filter /mnt/image-filters.txt 
+download -r 4.13.11 --acm-version 2.8.1 --mce-version 2.3.1 -f /mnt  \
+--img quay.io/alosadag/troubleshoot --filter /mnt/image-filters.txt 
 
 … REDACTED …
 gent-rhel8@sha256_d670e52864979bd31ff44e49d790aa4ee26b83feafb6081c47bb25373ea91f65
