@@ -49,7 +49,7 @@ Observe that the SSH server is not enabled in the RHCOS live OS by default. Ther
 As a requirement before starting the partitioning process, we need the disk to be not partitioned. If it is partitioned we can boot from an RHCOS live ISO, delete the partition, and wipe the full device. Also, it is suggested to erase filesystem, RAID, or partition-table signatures from the device:
 
 ```sh
-[root@liveiso] $ lsblk
+[root@liveiso]$ lsblk
 NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
 sr0          11:0    1     1G  0 rom  /run/media/iso
 nvme0n1     259:1    0   1.5T  0 disk 
@@ -59,10 +59,10 @@ nvme0n1     259:1    0   1.5T  0 disk
 ├─nvme0n1p4 259:5    0   1.2T  0 part 
 └─nvme0n1p5 259:6    0   250G  0 part 
 
-[root@liveiso] $ wipefs -a /dev/nvme0n1
+[root@liveiso]$ wipefs -a /dev/nvme0n1
 /dev/nvme0n1: calling ioctl to re-read partition table: Success
 
-[root@liveiso] $ lsblk
+[root@liveiso]$ lsblk
 NAME    MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
 sda       8:0    0 893.3G  0 disk 
 sr0      11:0    1     1G  0 rom  /run/media/iso
@@ -72,7 +72,7 @@ nvme0n1 259:1    0   1.5T  0 disk
 A second prerequisite is being able to pull the quay.io/openshift-kni/telco-ran-tools:latest container image that will be used to run the factory-precaching-cli tool. The image is publicly available in quay.io. If you are in a disconnected environment or have a corporate private registry, you will need to copy the image there. 
 
 ```sh
-[root@liveiso] $ podman pull quay.io/openshift-kni/telco-ran-tools:latest 
+[root@liveiso]$ podman pull quay.io/openshift-kni/telco-ran-tools:latest 
 Trying to pull quay.io/openshift-kni/telco-ran-tools:latest...
 Getting image source signatures
 … REDACTED …
@@ -84,7 +84,7 @@ Finally, we need to be sure that the disk is big enough to precache all the cont
 Let's start with the partitioning, for that we will use the partition argument from the factory-precaching-cli. We are going to create a single partition and a GPT partition table. This partition is going to be automatically labeled as “data” by default and created at the end of the device. Notice that the tool also formats the partition as XFS.
 
 ```sh
-[root@liveiso] # podman run --rm -v /dev:/dev --privileged quay.io/openshift-kni/telco-ran-tools:latest \
+[root@liveiso]$ podman run --rm -v /dev:/dev --privileged quay.io/openshift-kni/telco-ran-tools:latest \
                  -- factory-precaching-cli partition -d /dev/nvme0n1 -s 250
 Partition /dev/nvme0n1p1 is being formatted
 ```
@@ -92,7 +92,7 @@ Partition /dev/nvme0n1p1 is being formatted
 Verify that a new partition is created:
 
 ```sh
-[root@liveiso] # lsblk
+[root@liveiso]$ lsblk
 NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
 sr0          11:0    1     1G  0 rom  /run/media/iso
 nvme0n1     259:1    0   1.5T  0 disk 
@@ -103,7 +103,7 @@ nvme0n1     259:1    0   1.5T  0 disk
 Once the partition is created, we can mount the device into /mnt and move to the next stage: downloading the OpenShift release bits:
 
 ```sh
-[root@liveiso] # mount /dev/nvme0n1p1 /mnt/
+[root@liveiso]$ mount /dev/nvme0n1p1 /mnt/
 ```
 
 # Downloading the artifacts
@@ -121,7 +121,7 @@ Red Hat GitOps ZTP leverages [Red Hat Advanced Cluster Management for Kubernetes
 
 Check the version of RHACM and MCE by executing these commands in the hub cluster:
 ```sh
-[user@hub] $ oc get csv -A -o=custom-columns=NAME:.metadata.name,VERSION:.spec.version \
+[user@hub]$ oc get csv -A -o=custom-columns=NAME:.metadata.name,VERSION:.spec.version \
             | grep -iE "advanced-cluster-management|multicluster-engine"
 
 multicluster-engine.v2.3.1                    2.3.1
@@ -134,8 +134,8 @@ Next, let’s copy a valid pull secret to access our container registry. Notice 
 [root@liveiso]$ mkdir /root/.docker 
 [root@liveiso]$ cp config.json /root/.docker/config.json 
 
-[root@liveiso] # cp /tmp/rootCA.pem /etc/pki/ca-trust/source/anchors/.
-[root@liveiso]# update-ca-trust
+[root@liveiso]$ cp /tmp/rootCA.pem /etc/pki/ca-trust/source/anchors/.
+[root@liveiso]$ update-ca-trust
 ```
 ⚠️ If the images are being downloaded from the Red Hat registry then you only need to copy the Red Hat’s pull secret. No extra certificates are required.
 
@@ -176,7 +176,8 @@ Then, we add the download parameter and the OCP release version we want to preca
 ```sh
 [root@snonode ~]$ podman run -v /mnt:/mnt -v /root/.docker:/root/.docker -v /etc/pki:/etc/pki \
 --privileged --rm quay.io/openshift-kni/telco-ran-tools:latest -- factory-precaching-cli \
-  download -r 4.13.11 --acm-version 2.8.1 --mce-version 2.3.1 -f /mnt     --img quay.io/alosadag/troubleshoot --filter /mnt/image-filters.txt 
+download -r 4.13.11 --acm-version 2.8.1 --mce-version 2.3.1 -f /mnt  --img quay.io/alosadag/troubleshoot \
+--filter /mnt/image-filters.txt 
 
 … REDACTED …
 gent-rhel8@sha256_d670e52864979bd31ff44e49d790aa4ee26b83feafb6081c47bb25373ea91f65
