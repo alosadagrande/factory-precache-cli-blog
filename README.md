@@ -33,10 +33,10 @@ The factory-precaching-cli tool facilitates the pre-staging of servers before th
 
 In this blog, we are going through the four stages of the process and we will discuss the results:
 
-* Booting the RHCOS live
-* Partitioning the installation disk
-* Downloading the artifacts to the partition
-* ZTP configuration for precaching
+* [Booting the RHCOS live](#booting-the-rhcos-live-image).
+* [Partitioning the installation disk](#partitioning-the-installation-disk).
+* [Downloading the artifacts to the partition](#downloading-the-artifacts).
+* [ZTP configuration for precaching](#ztp-precaching-configuration).
 
 # Booting the RHCOS live image
 Technically you can boot from any live ISO that provides container tools such as Podman. However, the supported and tested OS is Red Hat CoreOS. You can obtain the latest live ISO from [here](https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/latest/rhcos-live.x86_64.iso).
@@ -220,7 +220,7 @@ The provisioning configuration is defined in a siteConfig custom resource that c
 
 Once the clusters are provisioned, day-2 configuration can be optionally defined in multiple policies included in PolicyGenTemplates (PGTs) custom resources. That configuration will be automatically applied to the specific managed clusters.
 
-# Preparing the siteConfig
+## Preparing the siteConfig
 As mentioned, a siteConfig manifest defines in a declarative manner how an OpenShift cluster is going to be installed and configured. Here is an [example single-node OpenShift SiteConfig CR](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html#ztp-pre-caching-config-con_pre-caching). However, unlike the regular ZTP provisioning workflow, three extra fields need to be included:
 
 * **clusters.ignitionConfigOverride**. This field adds an extra configuration in ignition format during the ZTP discovery stage. Detailed information [here](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html#ztp-pre-caching-config-clusters-ignitionconfigoverride_pre-caching).
@@ -266,7 +266,7 @@ sno-worker-00   infraenv.agent-install.openshift.io/sno-worker-00   2023-09-29T0
 
 ⚠️ Notice that the siteConfig custom resource has been divided into multiple different resources that can be understood by the MCE operator.
 
-# Monitoring the process
+## Monitoring the process
 
 Monitoring the provisioning is basically [monitoring the ZTP workflow](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-manual-install.html#ztp-checking-the-managed-cluster-status_ztp-manual-install) adding a couple of verifications that it is worth mentioning. First, in a couple of minutes after syncing the configuration we will notice that the server is being rebooted and it’s booting from the virtual CD.
 
