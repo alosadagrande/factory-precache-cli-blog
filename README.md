@@ -294,3 +294,6 @@ Finally, the cluster is installed. From the multicloud console running on the hu
 ![Baremetal SNO cluster installed](./pictures/acm-cluster-installed.png)
 
 
+# Conclusion
+
+The factory-precaching-cli tool is a promising tool that must be taken into account when dealing with slow networks when provisioning your SNO clusters. It also can come in handy when your corporate registry or even your network may be a bottleneck when you are about to install a high number of SNO clusters at the same time.
