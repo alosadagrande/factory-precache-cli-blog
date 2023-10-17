@@ -214,7 +214,7 @@ Red Hat GitOps ZTP allows you to provision OpenShift SNO, compact, or standard c
 Red Hat GitOps Zero Touch Provisioning (ZTP) leverages multiple components to deploy OCP clusters using a GitOps approach. The workflow starts when the node is connected to the network and ends with the workload deployed and running on the nodes. It can be logically divided into two different stages: provisioning of the SNO and applying the desired configuration.
 The provisioning configuration is defined in a siteConfig custom resource that contains all the necessary information to deploy your cluster or clusters. The provisioning process includes installing the host operating system (RHCOS) on a blank server and deploying the OpenShift Container Platform. This stage is managed mainly by a ZTP component called Assisted Installer which is part of the [Multicluster Engine](https://docs.openshift.com/container-platform/4.13/architecture/mce-overview-ocp.html) (MCE).
 
-![ZTP worklfow](./pictures/ztp_workflow.png)
+![ZTP worklfow](./pictures/ztp_flow.png)
 
 Once the clusters are provisioned, day-2 configuration can be optionally defined in multiple policies included in PolicyGenTemplates (PGTs) custom resources. That configuration will be automatically applied to the specific managed clusters.
 
@@ -223,8 +223,8 @@ As mentioned, a siteConfig manifest defines in a declarative manner how an OpenS
 
 * **clusters.ignitionConfigOverride**. This field adds an extra configuration in ignition format during the ZTP discovery stage. Detailed information [here](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html#ztp-pre-caching-config-clusters-ignitionconfigoverride_pre-caching).
 * **nodes.installerArgs**. This field allows us to configure the way coreos-installer utility writes the RHCOS live ISO to disk. It helps to avoid overriding the precache partition labeled as ‘data’. More information can be found [here](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html#ztp-pre-caching-config-nodes-installerargs_pre-caching).
-* **nodes.ignitionConfigOverride**. This field adds similar functionality as the clusters.ignitionConfigOverride, but in the OCP installation stage. This field allows the addition of persistent extra configuration to the node. More information [here](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html#ztp-pre-caching-config-nodes-ignitionconfigoverride_pre-caching
-* ).
+* **nodes.ignitionConfigOverride**. This field adds similar functionality as the clusters.ignitionConfigOverride, but in the OCP installation stage. This field allows the addition of persistent extra configuration to the node. More information [here](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html#ztp-pre-caching-config-nodes-ignitionconfigoverride_pre-caching)
+
 In recent versions of the factory-precaching-cli tool, things are much easier. The user can provide a valid siteConfig custom resource and the siteconfig sub-command will help to ensure the right extra fields and any updates to prestaging hooks (bug fixes, etc) are reflected in the siteConfig. 
 
 The command writes the updated siteConfig to stdout, which can be redirected to a new file for comparison with the original prior to adoption.
@@ -241,4 +241,54 @@ Once the resulting siteConfig is uploaded to the Git repo that OpenShift GitOps 
 ⚠️ OpenShift GitOps is configured by default on auto-sync so we do not even have to click on any button. That’s Zero Touch.
 
 The OpenShift GitOps operator running in the hub cluster will sync the configuration from the remote Git repository and apply it. That will be seen as green circles on every resource:
+
+![Argo sync](./pictures/argo_sync.gif)
+
+We can also verify that the resource has been applied using the oc command-line on the hub:
+
+```sh
+[user@hub]$ oc get bmh,clusterdeployment,agentclusterinstall,infraenv -A
+
+NAMESPACE               NAME                                                               STATE                    CONSUMER               ONLINE   ERROR   AGE
+ baremetalhost.metal3.io/snonode.sno-worker-00.e2e.bos.redhat.com   registering                                     true             50s
+
+NAMESPACE       NAME                                                INFRAID   PLATFORM          REGION   VERSION   CLUSTERTYPE   PROVISIONSTATUS   POWERSTATE   AGE
+sno-worker-00   clusterdeployment.hive.openshift.io/sno-worker-00             agent-baremetal                                    Initialized                    52s
+
+NAMESPACE       NAME                                                             CLUSTER         STATE
+sno-worker-00   agentclusterinstall.extensions.hive.openshift.io/sno-worker-00   sno-worker-00   insufficient
+
+NAMESPACE       NAME                                                ISO CREATED AT
+sno-worker-00   infraenv.agent-install.openshift.io/sno-worker-00   2023-09-29T09:05:24Z
+```
+
+⚠️ Notice that the siteConfig custom resource has been divided into multiple different resources that can be understood by the MCE operator.
+
+# Monitoring the process
+
+Monitoring the provisioning is basically [monitoring the ZTP workflow](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-manual-install.html#ztp-checking-the-managed-cluster-status_ztp-manual-install) adding a couple of verifications that it is worth mentioning. First, in a couple of minutes after syncing the configuration we will notice that the server is being rebooted and it’s booting from the virtual CD.
+
+![Baremetal host booting from virtualcd](./pictures/idrac-boot-virtualcd.png)
+
+During the boot process, a systemd unit is executed before finishing the boot process. That unit will extract a few precached container images that are needed during the discovery stage of the ZTP process. They can be monitored from the console. The information is also logged into the journal log:
+
+```sh
+$ journalctl
+…
+Sep 29 09:10:52 snonode bash[2452]: extract-ai.sh: [DEBUG] Processing image quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:4d2959b34b95a21265c39be7fe3cd3029f98b6e65de8fd3b8a473af0bd2>
+Sep 29 09:10:52 snonode bash[2884]: extract-ai.sh: [DEBUG] Extracting image quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:3aeff89d5126708be7616aea34cb88470145a71c82b81646e64b8919d4b>
+… REDACTED …
+Sep 29 09:11:26 snonode systemd[1]: precache-images.service: Deactivated successfully.
+Sep 29 09:11:26 snonode systemd[1]: Finished Load prestaged images in discovery stage.
+Sep 29 09:11:26 snonode systemd[1]: precache-images.service: Consumed 3min 38.548s CPU time.
+```
+
+The discovery stage finishes right after the RHCOS live ISO is written to the disk. The next restart will boot from the hard drive and we start what we call the OCP installation stage. In this phase, the precached OCP release images are extracted and are ready to be used during the provisioning. See the systemd service loading the precache image in the image below:
+
+![Baremetal host extracting ocp images](./pictures/idrac-prestaged2.png)
+
+Finally, the cluster is installed. From the multicloud console running on the hub cluster, we can download the kubeconfig and kubeadmin credentials. Now, the cluster is ready.
+
+![Baremetal SNO cluster installed](./pictures/acm-cluster-installed.png)
+
 
