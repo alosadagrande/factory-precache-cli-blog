@@ -244,7 +244,7 @@ Once the resulting siteConfig is uploaded to the Git repo that OpenShift GitOps 
 
 The OpenShift GitOps operator running in the hub cluster will sync the configuration from the remote Git repository and apply it. That will be seen as green circles on every resource:
 
-![Argo sync](./pictures/argo_sync.gif)
+![Argo sync](./pictures/gitops-green.png)
 
 We can also verify that the resource has been applied using the oc command-line on the hub:
 
