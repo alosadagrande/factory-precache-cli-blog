@@ -112,12 +112,12 @@ This stage manages the download of the OCP release images. More advanced scenari
 ## Pre-requisites
 
 * The partitioning stage must be previously executed successfully.
-* Currently, the target or jump-host server needs to be connected to the Internet to obtain the dependency of OCP release images that need to be pulled down.
-* A valid pull secret to the registries involved in the downloading process of the container images is required. Red Hat’s pull secret can be obtained from the Red Hat's console UI.
+* Currently, the target or jump-host server needs to be connected to the Internet to obtain the dependency of the OCP release images that need to be pulled down.
+* A valid pull secret to the registry involved in the downloading process of the container images is required. Red Hat’s pull secret can be obtained from the Red Hat's console UI.
 
 ⚠️ If your systems are in a strictly disconnected environment you can execute the downloading process from a connected jumphost and then copy the artifacts and metadata information to the target server’s partition. 
 
-Red Hat GitOps ZTP leverages [Red Hat Advanced Cluster Management for Kubernetes](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-deploying-far-edge-sites.html) to provision multiple managed clusters. The RHACM and MCE versions of the hub cluster will determine what assisted installer container images are used by the SNO to provision, report back the inventory information, and monitor the installation progress of the spoke cluster.  We want those images to be precached as well.
+Red Hat GitOps ZTP leverages [Red Hat Advanced Cluster Management for Kubernetes](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-deploying-far-edge-sites.html) to provision multiple managed clusters. The RHACM and MCE versions of the hub cluster will determine what assisted installer container images are used by the SNO to provision, report back the inventory information, and monitor the installation progress of the managed cluster.  We want those images to be precached as well.
 
 Check the version of RHACM and MCE by executing these commands in the hub cluster:
 ```sh
@@ -163,7 +163,7 @@ patterns:
   - vsphere
 ```
 
-In order to speed up the pulling process the factory-precaching-cli tool will use parallel workers to download multiple images simultaneously. Now, we are ready to download the required artifacts locally to our /mnt partition. 
+In order to speed up the pulling process, the factory-precaching-cli tool will use parallel workers to download multiple images simultaneously. Now, we are ready to download the required artifacts locally to our /mnt partition. 
 
 As we can see in the execution below, several host paths are mounted into the container:
 
@@ -171,7 +171,7 @@ As we can see in the execution below, several host paths are mounted into the co
 * **$HOME/.docker** folder where the registry pull secret is located.
 * **/etc/pki** folder where the private registry certificate is stored.
   
-Then, we add the download parameter and the OCP release version we want to precache. Also, the RHACM and MCE versions of the hub cluster we obtained. Observe that some extra images can also be precached using the --img flag and the --filter option is included avoiding container images not needed.
+Then, we add the `download` parameter and the OCP release version we want to precache. Also, the RHACM and MCE versions of the hub cluster we obtained previously. Observe that some extra images can also be precached using the --img flag and the --filter option is included avoiding precaching container images not needed.
 
 ```sh
 [root@snonode ~]$ podman run -v /mnt:/mnt -v /root/.docker:/root/.docker -v /etc/pki:/etc/pki \
@@ -209,25 +209,26 @@ After a couple of minutes, depending on the network speed, a complete summary of
 
 This is the last stage where we get ready to provision one or multiple SNOs using the precached artifacts local to each cluster. Basically, we need to let Zero Touch Provisioning know that before starting the proper step of the installation process there are container images that do not have to be pulled from a registry.
 
-Red Hat GitOps ZTP allows you to provision OpenShift SNO, compact, or standard clusters with declarative configurations of bare-metal equipment at remote sites following a GitOps deployment set of practices. ZTP is a project to deploy and deliver OpenShift 4 in a hub-and-spoke architecture (in a relation of 1-N), where a single hub cluster manages many managed or spoke clusters. The central or hub cluster will manage, deploy, and control the lifecycle of the spokes using Red Hat Advanced Cluster Management (RHACM). 
+Red Hat GitOps ZTP allows you to provision OpenShift SNO, compact, or standard clusters with declarative configurations of bare-metal equipment at remote sites following a GitOps deployment set of practices. ZTP is a project to deploy and deliver Red Hat OpenShift 4 in a hub-and-spoke architecture (in a relation of 1-N), where a single hub cluster manages many managed or spoke clusters. The central or hub cluster will manage, deploy, and control the lifecycle of the spokes using Red Hat Advanced Cluster Management (RHACM). 
 
 ## Red Hat GitOps ZTP Workflow
 
 Red Hat GitOps Zero Touch Provisioning (ZTP) leverages multiple components to deploy OCP clusters using a GitOps approach. The workflow starts when the node is connected to the network and ends with the workload deployed and running on the nodes. It can be logically divided into two different stages: provisioning of the SNO and applying the desired configuration.
-The provisioning configuration is defined in a siteConfig custom resource that contains all the necessary information to deploy your cluster or clusters. The provisioning process includes installing the host operating system (RHCOS) on a blank server and deploying the OpenShift Container Platform. This stage is managed mainly by a ZTP component called Assisted Installer which is part of the [Multicluster Engine](https://docs.openshift.com/container-platform/4.13/architecture/mce-overview-ocp.html) (MCE).
+
+The provisioning configuration is defined in a `siteConfig` custom resource that contains all the necessary information to deploy your cluster or clusters. The provisioning process includes installing the host operating system (RHCOS) on a blank server and deploying the OpenShift Container Platform. This stage is managed mainly by a ZTP component called Assisted Installer which is part of the [Multicluster Engine](https://docs.openshift.com/container-platform/4.13/architecture/mce-overview-ocp.html) (MCE).
 
 ![ZTP worklfow](./pictures/ztp_flow.png)
 
-Once the clusters are provisioned, day-2 configuration can be optionally defined in multiple policies included in PolicyGenTemplates (PGTs) custom resources. That configuration will be automatically applied to the specific managed clusters.
+Once the clusters are provisioned, day-2 configuration can be optionally defined in multiple policies included in `PolicyGenTemplates` (PGTs) custom resources. That configuration will be automatically applied to the specific managed clusters.
 
 ## Preparing the siteConfig
-As mentioned, a siteConfig manifest defines in a declarative manner how an OpenShift cluster is going to be installed and configured. Here is an [example single-node OpenShift SiteConfig CR](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html#ztp-pre-caching-config-con_pre-caching). However, unlike the regular ZTP provisioning workflow, three extra fields need to be included:
+As mentioned, a `siteConfig` manifest defines in a declarative manner how an OpenShift cluster is going to be installed and configured. Here is an [example single-node OpenShift SiteConfig CR](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html#ztp-pre-caching-config-con_pre-caching). However, unlike the regular ZTP provisioning workflow, three extra fields need to be included:
 
 * **clusters.ignitionConfigOverride**. This field adds an extra configuration in ignition format during the ZTP discovery stage. Detailed information [here](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html#ztp-pre-caching-config-clusters-ignitionconfigoverride_pre-caching).
-* **nodes.installerArgs**. This field allows us to configure the way coreos-installer utility writes the RHCOS live ISO to disk. It helps to avoid overriding the precache partition labeled as ‘data’. More information can be found [here](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html#ztp-pre-caching-config-nodes-installerargs_pre-caching).
-* **nodes.ignitionConfigOverride**. This field adds similar functionality as the clusters.ignitionConfigOverride, but in the OCP installation stage. This field allows the addition of persistent extra configuration to the node. More information [here](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html#ztp-pre-caching-config-nodes-ignitionconfigoverride_pre-caching)
+* **nodes.installerArgs**. This field allows us to configure the way coreos-installer utility writes the RHCOS live ISO to disk. It helps to avoid overriding the precache partition labeled as `data`. More information can be found [here](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html#ztp-pre-caching-config-nodes-installerargs_pre-caching).
+* **nodes.ignitionConfigOverride**. This field adds similar functionality as the _clusters.ignitionConfigOverride_, but in the OCP installation stage. This field allows the addition of persistent extra configuration to the node. More information [here](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html#ztp-pre-caching-config-nodes-ignitionconfigoverride_pre-caching)
 
-In recent versions of the factory-precaching-cli tool, things are much easier. The user can provide a valid siteConfig custom resource and the siteconfig sub-command will help to ensure the right extra fields and any updates to prestaging hooks (bug fixes, etc) are reflected in the siteConfig. 
+In recent versions of the factory-precaching-cli tool, things are much easier. The user can provide a valid `siteConfig` custom resource and the `siteconfig` sub-command will help to ensure the right extra fields and any updates to pre-staging hooks (bug fixes, etc) are reflected in the `siteConfig` custom resource. 
 
 The command writes the updated siteConfig to stdout, which can be redirected to a new file for comparison with the original prior to adoption.
 ```sh
@@ -246,7 +247,7 @@ The OpenShift GitOps operator running in the hub cluster will sync the configura
 
 ![Argo sync](./pictures/gitops-green.png)
 
-We can also verify that the resource has been applied using the oc command-line on the hub:
+We can also verify that the resource has been applied using the oc command line on the hub cluster:
 
 ```sh
 [user@hub]$ oc get bmh,clusterdeployment,agentclusterinstall,infraenv -A
@@ -264,7 +265,7 @@ NAMESPACE       NAME                                                ISO CREATED 
 sno-worker-00   infraenv.agent-install.openshift.io/sno-worker-00   2023-09-29T09:05:24Z
 ```
 
-⚠️ Notice that the siteConfig custom resource has been divided into multiple different resources that can be understood by the MCE operator.
+⚠️ Notice that the `siteConfig` custom resource has been divided into multiple different resources that can be understood by the MCE operator.
 
 ## Monitoring the process
 
@@ -285,7 +286,7 @@ Sep 29 09:11:26 snonode systemd[1]: Finished Load prestaged images in discovery 
 Sep 29 09:11:26 snonode systemd[1]: precache-images.service: Consumed 3min 38.548s CPU time.
 ```
 
-The discovery stage finishes right after the RHCOS live ISO is written to the disk. The next restart will boot from the hard drive and we start what we call the OCP installation stage. In this phase, the precached OCP release images are extracted and are ready to be used during the provisioning. See the systemd service loading the precache image in the image below:
+The discovery stage finishes right after the RHCOS live ISO is written to the disk. In the next restart, the server will boot from the hard drive and we start what we call the OCP installation stage. In this phase, the precached OCP release images are extracted and are ready to be used during the installation. See the systemd service loading the precache image in the image below:
 
 ![Baremetal host extracting ocp images](./pictures/idrac-prestaged2.png)
 
@@ -296,4 +297,4 @@ Finally, the cluster is installed. From the multicloud console running on the hu
 
 # Conclusion
 
-The factory-precaching-cli tool is a promising tool that must be taken into account when dealing with slow networks when provisioning your SNO clusters. It also can come in handy when your corporate registry or even your network may be a bottleneck when you are about to install a high number of SNO clusters at the same time. More information can be found in the [official docs](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html) and the [telco-ran-tools GitHub repository](https://github.com/openshift-kni/telco-ran-tools/tree/main) where you can drive the future of the tool.
+The factory-precaching-cli tool is a promising tool that must be taken into account when dealing with slow networks in order to provision one or multiple SNO clusters. It also can come in handy when your corporate registry or even your network may be a bottleneck when you are about to install a high number of SNO clusters at the same time. More information on this tool can be found in the [official docs](https://docs.openshift.com/container-platform/4.13/scalability_and_performance/ztp_far_edge/ztp-precaching-tool.html) and the [telco-ran-tools GitHub repository](https://github.com/openshift-kni/telco-ran-tools/tree/main) where you can drive the future of the tool.
