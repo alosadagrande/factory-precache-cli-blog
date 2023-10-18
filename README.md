@@ -69,7 +69,7 @@ sr0      11:0    1     1G  0 rom  /run/media/iso
 nvme0n1 259:1    0   1.5T  0 disk 
 ```
 
-A second prerequisite is being able to pull the `quay.io/openshift-kni/telco-ran-tools:latest` container image that will be used to run the factory-precaching-cli tool. The image is publicly available in quay.io. If you are in a disconnected environment or have a corporate private registry, you will need to copy the image there. 
+A second prerequisite is being able to pull the `quay.io/openshift-kni/telco-ran-tools:latest` container image that will be used to run the factory-precaching-cli tool. The image is publicly available in quay.io. If you are in a disconnected environment or have a corporate private registry, you must copy the image there. 
 
 ```sh
 [root@liveiso]$ podman pull quay.io/openshift-kni/telco-ran-tools:latest 
@@ -81,7 +81,7 @@ Copying blob 146306f19891 done
 
 Finally, we need to be sure that the disk is big enough to precache all the container images required: OCP release images and optionally day2 operators. Based on our experience, 250GB is more than enough for OpenShift installation.
 
-Let's start with the partitioning, for that we will use the partition argument from the factory-precaching-cli. We are going to create a single partition and a GPT partition table. This partition is going to be automatically labeled as “data” by default and created at the end of the device. Notice that the tool also formats the partition as XFS.
+Let's start with the partitioning. For that, we will use the partition argument from the factory-precaching-cli. We are going to create a single partition and a GPT partition table. This partition is going to be automatically labeled as `data` by default and created at the end of the device. Notice that the tool also formats the partition as XFS.
 
 ```sh
 [root@liveiso]$ podman run --rm -v /dev:/dev --privileged quay.io/openshift-kni/telco-ran-tools:latest \
