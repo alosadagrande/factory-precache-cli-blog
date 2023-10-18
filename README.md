@@ -16,7 +16,7 @@ In terms of bytes exchanged with the registry, we can see how we can save up to 
 # Motivation
 In environments with limited bandwidth and using the Red Hat GitOps ZTP solution to deploy a large number of SNO clusters, it might be desirable to avoid the use of the network for downloading the artifacts required for installing OCP. In cases where a high number of clusters are provisioned and the content is pulled from the same private registry, it can be advisable to minimize the traffic usage and avoid the registry being a bottleneck. 
 
-Notice that the bandwidth to remote sites might be limited, resulting in long deployment times with the existing Red Hat GitOps ZTP solution. Therefore, improvement of the installation time might be a valid goal as well.
+Notice that the bandwidth to remote sites might be limited, resulting in long deployment times with the existing Red Hat GitOps ZTP solution. Therefore, improvement of the installation time is a valid goal as well.
 
 In order to address the bandwidth limitations, a factory pre-staging solution helps to eliminate the download of most of the artifacts at the remote site. As artifacts, we refer both to container images and optionally images such as the rootfs.
 
