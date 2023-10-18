@@ -69,7 +69,7 @@ sr0      11:0    1     1G  0 rom  /run/media/iso
 nvme0n1 259:1    0   1.5T  0 disk 
 ```
 
-A second prerequisite is being able to pull the quay.io/openshift-kni/telco-ran-tools:latest container image that will be used to run the factory-precaching-cli tool. The image is publicly available in quay.io. If you are in a disconnected environment or have a corporate private registry, you will need to copy the image there. 
+A second prerequisite is being able to pull the `quay.io/openshift-kni/telco-ran-tools:latest` container image that will be used to run the factory-precaching-cli tool. The image is publicly available in quay.io. If you are in a disconnected environment or have a corporate private registry, you will need to copy the image there. 
 
 ```sh
 [root@liveiso]$ podman pull quay.io/openshift-kni/telco-ran-tools:latest 
